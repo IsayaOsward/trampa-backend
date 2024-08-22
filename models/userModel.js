@@ -1,7 +1,9 @@
 const pool = require("../config/database");
+const { queryStatement } = require("../utils/queryStatement");
 
 class userModel {
-  static findUserByEmail(email, callback) {
+  static checkUserByEmail(email, callback) {
+    console.log("findUserByEmail called with email:", email); // Log
     const statement = "SELECT * FROM users WHERE email = ?";
     pool.query(statement, [email], (err, results) => {
       if (typeof callback === "function") {
@@ -14,6 +16,7 @@ class userModel {
   }
 
   static findUserByPhone(phone_number, callback) {
+    console.log("findUserByPhone called with phone_number:", phone_number); // Log
     const statement = "SELECT * FROM users WHERE phone_number = ?";
     pool.query(statement, [phone_number], (err, results) => {
       if (typeof callback === "function") {
@@ -26,6 +29,7 @@ class userModel {
   }
 
   static findByUserID(userID, callback) {
+    console.log("findByUserID called with userID:", userID); // Log
     const sql = "SELECT * FROM users WHERE user_id = ?";
     pool.query(sql, [userID], (err, results) => {
       if (typeof callback === "function") {
@@ -38,6 +42,7 @@ class userModel {
   }
 
   static registerUser(userData, callback) {
+    console.log("registerUser called with userData:", userData); // Log
     const { user_id, first_name, lastname, gender, phone_number, email } =
       userData;
     const registerSQL =
@@ -56,8 +61,8 @@ class userModel {
     );
   }
 
-  // function to save credentials to the database
   static saveCredentials(user_id, password_hash, role, callback) {
+    console.log("saveCredentials called with user_id:", user_id, "role:", role); // Log
     const statement =
       "INSERT INTO credentials (user_id, password_hash, role) VALUES (?, ?, ?)";
     pool.query(statement, [user_id, password_hash, role], (err, results) => {
@@ -70,14 +75,17 @@ class userModel {
     });
   }
 
-
-// a transaction based execution to ensure that all details are filled before commiting a change
   static registerUserWithCredentials(userData, credentialsData, callback) {
+    console.log("registerUserWithCredentials called with userData:", userData); // Log
     pool.getConnection((err, connection) => {
-      if (err) return callback(err, null);
+      if (err) {
+        console.error("Error getting connection:", err);
+        return callback(err, null);
+      }
 
       connection.beginTransaction((err) => {
         if (err) {
+          console.error("Error starting transaction:", err);
           connection.release();
           return callback(err, null);
         }
@@ -96,6 +104,7 @@ class userModel {
           ],
           (err) => {
             if (err) {
+              console.error("Error inserting user:", err);
               return connection.rollback(() => {
                 connection.release();
                 callback(err, null);
@@ -113,6 +122,7 @@ class userModel {
               ],
               (err) => {
                 if (err) {
+                  console.error("Error inserting credentials:", err);
                   return connection.rollback(() => {
                     connection.release();
                     callback(err, null);
@@ -121,12 +131,14 @@ class userModel {
 
                 connection.commit((err) => {
                   if (err) {
+                    console.error("Error committing transaction:", err);
                     return connection.rollback(() => {
                       connection.release();
                       callback(err, null);
                     });
                   }
 
+                  console.log("User registered successfully"); // Log
                   connection.release();
                   callback(null, {
                     success: true,
@@ -139,6 +151,28 @@ class userModel {
         );
       });
     });
+  }
+
+  // Logging in logics
+
+  static async findUserByEmail(email) {
+    console.log("findUserByEmail (login) called with email:", email); // Log
+    const sql = `SELECT users.user_id AS user_id, users.first_name, users.lastname, users.email, credentials.password_hash, credentials.role, credentials.loginAttempts FROM users JOIN credentials ON users.user_id = credentials.user_id WHERE users.email = ? LIMIT 1;`;
+    const results = await queryStatement(sql, [email]);
+    return results[0];
+  }
+
+  static async incrementLoginAttempts(user_id) {
+    console.log("incrementLoginAttempts called with user_id:", user_id); // Log
+    const sql =
+      "UPDATE credentials SET loginAttempts = loginAttempts + 1 WHERE user_id = ?";
+    await queryStatement(sql, [user_id]);
+  }
+
+  static async resetLoginAttempts(user_id) {
+    console.log("resetLoginAttempts called with user_id:", user_id); // Log
+    const sql = "UPDATE credentials SET loginAttempts = 0 WHERE user_id = ?";
+    await queryStatement(sql, [user_id]);
   }
 }
 

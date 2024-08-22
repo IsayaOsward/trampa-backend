@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const userModel = require("../models/userModel");
 const generateUserID = require("../utils/generateUserID");
+const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 const {
   isValidEmail,
   isValidName,
@@ -9,12 +10,83 @@ const {
 
 // Hash password using bcrypt
 async function hashPassword(password) {
-  const saltRounds = 10; // You can adjust the salt rounds as needed
+  const saltRounds = 10;
   return bcrypt.hash(password, saltRounds);
 }
 
-// This is a function that receives data from the frontend and sends it to the model
+// Login Controller
+async function loginController(req, res) {
+  console.log("Login request received:", req.body); // Log the incoming request
+
+  const { email, password } = req.body;
+
+  try {
+    // Find user by email
+    const user = await userModel.findUserByEmail(email);
+    console.log("The find user by email result "+user);
+    
+
+    // If user is not found
+    if (!user) {
+      console.log("User is not found");
+      
+      return res
+        .status(401)
+        .send({ success: false, message: "Invalid email or password" });
+    }
+
+    // Check if the account is locked due to too many incorrect login attempts
+    if (user.loginAttempts >= 5) {
+      return res.status(403).send({
+        success: false,
+        message:
+          "Your account is locked due to too many incorrect login attempts.",
+      });
+    }
+
+    // Verify the password
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!isPasswordCorrect) {
+      // Increment login attempts on failed login
+      await userModel.incrementLoginAttempts(user.user_id);
+      return res
+        .status(401)
+        .send({ success: false, message: "Invalid email or password" });
+    }
+
+    // Reset login attempts on successful login
+    await userModel.resetLoginAttempts(user.user_id);
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Prepare the response data
+    const response = {
+      username: `${user.first_name} ${user.lastname}`,
+      email: user.email,
+      accessToken,
+      refreshToken,
+    };
+
+    // Send response
+    return res.status(200).send({ success: true, data: response });
+  } catch (error) {
+    console.error("Error in loginController:", error);
+    return res
+      .status(500)
+      .send({ success: false, message: "Internal server error" });
+  }
+}
+
+// Register Controller
 async function registerController(req, res) {
+  console.log("Register request received:", req.body); // Log the incoming request
+
   try {
     let { first_name, lastname, gender, phone_number, email, password, role } =
       req.body;
@@ -49,7 +121,7 @@ async function registerController(req, res) {
     }
 
     // Verify whether a new user is using an existing email
-    userModel.findUserByEmail(email, (err, emailExist) => {
+    userModel.checkUserByEmail(email, (err, emailExist) => {
       if (err) {
         console.error("Error checking email existence:", err);
         return res.status(500).send({
@@ -111,8 +183,8 @@ async function registerController(req, res) {
                   }
 
                   return res.status(201).send({
-                    // success: true,
-                    // message: "User registered successfully",
+                    success: true,
+                    message: "User registered successfully",
                     data: registerResult,
                   });
                 }
@@ -160,4 +232,4 @@ async function generateUniqueUserID() {
   return user_id;
 }
 
-module.exports = { registerController };
+module.exports = { registerController, loginController };
