@@ -21,3 +21,12 @@
   "password": "SecureP@ssw0rd!",
   "role": "admin" // Optional, defaults to "user" if not provided
 }
+
+```
+### Success Response Message:
+{
+  "data": {
+    "success": true,
+    "message": "User registered successfully"
+  }
+}
