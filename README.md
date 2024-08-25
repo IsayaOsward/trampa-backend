@@ -1,13 +1,13 @@
 # APIs FOR TRAMPA WEB SYSTEM
 
 ## BASE_URL
-`http://localhost:3050`
+`http://localhost:3050/api/v1`
 
 ---
 
 ## 1. Registration API
 
-**Endpoint:** `BASE_URL/api/v1/register/`
+**Endpoint:** `/register/`
 
 ### **Parameters Required:**
 
@@ -40,3 +40,48 @@
   "message": "ERROR MESSAGE GOES HERE"
 }
 ```
+
+## 2. Login API
+**Endpoint** `/login/`
+## ** PARAMETERS REQUIED:**
+```json
+{
+	"email": "isaya.osward@example.com",
+ 	"password": "SecureP@ssw0rd!"
+}
+```
+
+## **SUCCESS RESPONSE MESSAGE**
+```json
+{
+    "success": true,
+    "data": {
+        "username": "John Doe",
+        "email": "johndoe@axample.com",
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAYXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTcyNDI2MTIxMSwiZXhwIjoxNzI0MjYyMTExfQ.LUgp5Gp3DUsa9PkE5UOnjgE7RMDUBzCYqgsnrjU3iaE",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoidXNlciIsImlhdCI6MTcyNDI2MTIxMSwiZXhwIjoxNzI0MzQ3NjExfQ.eAp9j1-Ashw-GWXxmd5TVYbZOaAu-mV3P2zfYFmVfN8"
+    }
+}
+```
+
+### **FAILED RESPONSE MESSAGE**
+```json
+{
+    "success": false,
+    "message": "Invalid email or password"
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+j
