@@ -64,7 +64,7 @@
 }
 ```
 
-### **FAILED RESPONSE MESSAGE**
+### **Failed Response Message**
 ```json
 {
     "success": false,
@@ -73,15 +73,76 @@
 ```
 
 
+## 3. BLOG CREATION API
+
+**Endpoint: **POST:  `/blogs/create/`
+
+### Description
+Creates a new blog post with a title, body content, and associated images.
+
+## Request Headers
+- ```Content-Type: multipart/form-data```
 
 
+## Request Body
+The request body should be sent as `multipart/form-data`. This allows you to upload files along with form data.
+
+### Fields
+
+a. title
+   - Type: `string`
+   - Description: The title of the blog post.
+   - Constraints: Required, cannot be empty.
+
+b. body
+   - Type: `string`
+   - Description: The body content of the blog post.
+   - Constraints: Required, cannot be empty.
+
+c.images
+   - Type: file
+   - Description: Images to be uploaded with the blog post.
+   -Constraints: 
+     - Minimum 1 image
+     - Maximum 10 images
+     - Allowed formats: JPG, JPEG, PNG
 
 
+## Response
 
+## Success Response
 
+- Status Code: `201 Created`
+- Body: ```json
+  {
+    "success": true,
+    "message": "Blog post created successfully!"
+  }```
 
+### Error Response
 
+i. Validation Error
 
+   - Status Code: `400 Bad Request`
+   - Body:
+     ```json
+     {
+       "success": false,
+       "message": "Please provide the blog title."
+     }
+     ```
+     OR
+     ```json
+     {
+       "success": false,
+       "message": "Please provide the blog body content."
+     }```
 
-
-j
+ii. Image Upload Error
+   - Status Code: `400 Bad Request`
+   - Body:
+   - ```json
+     {
+       "success": false,
+       "message": "Please upload between 1 and 10 images."
+     }```
