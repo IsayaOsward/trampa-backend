@@ -18,3 +18,16 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`user_id`),
   KEY `id` (`id`)
 ) 
+
+
+CREATE TABLE `credentials` (
+	`id` INT(10) NOT NULL AUTO_INCREMENT,
+	`user_id` VARCHAR(50) NOT NULL COLLATE,
+	`password_hash` VARCHAR(120) NOT NULL,
+	`role` VARCHAR(50) NOT NULL DEFAULT '0',
+	`status` INT(10) NOT NULL DEFAULT '0',
+	`loginAttempts` INT(10) NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `FK_credentials_users` (`user_id`),
+	FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE NO ACTION ON DELETE CASCADE
+)
