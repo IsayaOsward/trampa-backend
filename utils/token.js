@@ -1,6 +1,5 @@
 // utils/token.js
 const jwt = require("jsonwebtoken");
-
 const accessTokenSecret = "yourAccessTokenSecret"; // Replace with your own secret key
 const refreshTokenSecret = "yourRefreshTokenSecret"; // Replace with your own secret key
 

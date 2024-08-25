@@ -33,9 +33,22 @@ function formatAndValidatePhoneNumber(phoneNumber) {
   return cleaned.length === 12 && /^[0-9]+$/.test(cleaned) ? cleaned : null;
 }
 
+//validation of images formats
+const allowedFormats = ["image/jpeg", "image/jpg", "image/png"];
+
+const validateImageFormat = (files) => {
+  for (const file of files) {
+    if (!allowedFormats.includes(file.mimetype)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 module.exports = {
   isValidEmail,
   isValidPassword,
   isValidName,
   formatAndValidatePhoneNumber,
+  validateImageFormat,
 };
