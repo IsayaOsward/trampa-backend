@@ -32,3 +32,11 @@
   }
 }
 ```
+
+### Error Message:
+```json
+{
+  "success": false,
+  "message": "ERROR MESSAGE GOES HERE"
+}
+```
