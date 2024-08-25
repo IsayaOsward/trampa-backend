@@ -31,3 +31,20 @@ CREATE TABLE `credentials` (
 	INDEX `FK_credentials_users` (`user_id`),
 	FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON UPDATE NO ACTION ON DELETE CASCADE
 )
+
+
+
+CREATE TABLE `event_registration` (
+	`id` INT(10) NOT NULL AUTO_INCREMENT,
+	`event_id` VARCHAR(50) NOT NULL,
+	`first_name` VARCHAR(50) NOT NULL,
+	`lastname` VARCHAR(50) NOT NULL,
+	`email` VARCHAR(50) NOT NULL,
+	`mobile` VARCHAR(50) NOT NULL,
+	`position` VARCHAR(50) NOT NULL,
+	`company` VARCHAR(50) NOT NULL,
+	`telephone` VARCHAR(50) NOT NULL,
+	`country` VARCHAR(50) NOT NULL,
+	`membership_number` VARCHAR(50) NOT NULL,
+	INDEX `id` (`id`) USING BTREE
+)
