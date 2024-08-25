@@ -134,12 +134,12 @@ i. Validation Error
      }
      ```
      OR
-     ```json
+	```json
 	{
 	       "success": false,
 	       "message": "Please provide the blog body content."
 	}
-```
+	```
 
 ii. Image Upload Error
    - Status Code: `400 Bad Request`
