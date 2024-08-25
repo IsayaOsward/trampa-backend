@@ -24,9 +24,11 @@
 
 ```
 ### Success Response Message:
+```json
 {
   "data": {
     "success": true,
     "message": "User registered successfully"
   }
 }
+```
