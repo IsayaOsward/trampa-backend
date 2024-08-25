@@ -109,8 +109,7 @@ c.images
 
 
 ## Response
-
-## Success Response
+### Success Response
 
 - Status Code: `201 Created`
 - Body:
@@ -134,19 +133,19 @@ i. Validation Error
      }
      ```
      OR
-```json
-{
-       "success": false,
-       "message": "Please provide the blog body content."
-}
-```
+     ```json
+	{
+	       "success": false,
+	       "message": "Please provide the blog body content."
+	}
+     ```
 
 ii. Image Upload Error
    - Status Code: `400 Bad Request`
    - Body:
-``` json
+     ``` json
      {
        "success": false,
        "message": "Please upload between 1 and 10 images."
      }
-```
+     ```
