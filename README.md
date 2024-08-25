@@ -85,7 +85,8 @@ Creates a new blog post with a title, body content, and associated images.
 
 
 ## Request Body
-The request body should be sent as `multipart/form-data`. This allows you to upload files along with form data.
+The request body should be sent as `multipart/form-data`. 
+This allows you to upload files along with form data.
 
 ### Fields
 
@@ -113,7 +114,7 @@ c.images
 
 - Status Code: `201 Created`
 - Body:
-- ```json
+ ```json
   {
     "success": true,
     "message": "Blog post created successfully!"
@@ -138,7 +139,7 @@ i. Validation Error
 	       "success": false,
 	       "message": "Please provide the blog body content."
 	}
-     ```
+```
 
 ii. Image Upload Error
    - Status Code: `400 Bad Request`
