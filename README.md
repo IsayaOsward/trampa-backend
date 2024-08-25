@@ -75,7 +75,7 @@
 
 ## 3. BLOG CREATION API
 
-**Endpoint: **POST:  `/blogs/create/`
+**Endpoint:** POST:  `/blogs/create/`
 
 ### Description
 Creates a new blog post with a title, body content, and associated images.
@@ -100,7 +100,7 @@ b. body
    - Constraints: Required, cannot be empty.
 
 c.images
-   - Type: file
+   - Type: `file`
    - Description: Images to be uploaded with the blog post.
    -Constraints: 
      - Minimum 1 image
@@ -113,11 +113,13 @@ c.images
 ## Success Response
 
 - Status Code: `201 Created`
-- Body: ```json
+- Body:
+- ```json
   {
     "success": true,
     "message": "Blog post created successfully!"
-  }```
+  }
+  ```
 
 ### Error Response
 
@@ -132,17 +134,19 @@ i. Validation Error
      }
      ```
      OR
-     ```json
-     {
+```json
+{
        "success": false,
        "message": "Please provide the blog body content."
-     }```
+}
+```
 
 ii. Image Upload Error
    - Status Code: `400 Bad Request`
    - Body:
-   - ```json
+``` json
      {
        "success": false,
        "message": "Please upload between 1 and 10 images."
-     }```
+     }
+```
