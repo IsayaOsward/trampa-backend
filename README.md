@@ -43,7 +43,7 @@
 
 ## 2. Login API
 **Endpoint** `/login/`
-## ** PARAMETERS REQUIED:**
+### **Parameters Required:**
 ```json
 {
 	"email": "isaya.osward@example.com",
@@ -51,7 +51,7 @@
 }
 ```
 
-## **SUCCESS RESPONSE MESSAGE**
+### **Success Response Message**
 ```json
 {
     "success": true,
