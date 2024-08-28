@@ -1,47 +1,9 @@
 // controllers/blogController.js
 const BlogPost = require("../models/blogModel");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const { validateImageFormat } = require("../utils/validation");
-const generateUniqueBlogId = require('../utils/generateBlogId');
+const setupMulter = require("../utils/imageUpload") // Import the utility function
+const generateUniqueBlogId = require("../utils/generateBlogId");
 
-// Ensure uploads folder exists
-const baseUploadDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(baseUploadDir)) {
-  fs.mkdirSync(baseUploadDir, { recursive: true });
-}
-
-// Set up storage for Multer
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    //fetching blog ID from middleware
-    const blogId = req.blogId;
-    const uploadDir = path.join(baseUploadDir, blogId);
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    cb(null, uploadDir); // Use the created folder for the blog ID
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    if (!validateImageFormat([file])) {
-      return cb(new Error("Only JPG, JPEG, and PNG formats are allowed!"));
-    }
-    cb(null, true);
-  },
-});
-
-// Exporting the upload
-exports.upload = upload;
+const upload = setupMulter("blogs"); // Pass the folder name
 
 // Middleware to set blog ID before file upload
 exports.setBlogId = async (req, res, next) => {
@@ -74,8 +36,48 @@ exports.preValidateBlog = (req, res, next) => {
 
   next();
 };
+// Fetch paginated blog posts
+exports.getBlogs = async (req, res) => {
+  const { page = 1, limit = 10 } = req.query; // Default: page 1, 10 posts per page
 
-//creating a blog
+  try {
+    const blogs = await BlogPost.findAll({ page, limit });
+    res.status(200).json(blogs);
+  } catch (error) {
+    res.status(500).send({success: false, message: "Failed to retrieve blog posts."});
+  }
+};
+
+// Fetch single blog post for reading more
+exports.getBlogById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const blog = await BlogPost.findById(id);
+    if (blog) {
+      res.status(200).json(blog);
+    } else {
+      res.status(404).send({success: false, message: "Blog post not found."});
+    }
+  } catch (error) {
+    res.status(500).send({success: false, message: "Failed to retrieve blog post."});
+  }
+};
+
+
+// Preview blog posts
+exports.getBlogPreview = async (req, res) => {
+  try {
+    const blogs = await BlogPost.findPreviews();
+    res.status(200).json(blogs);
+  } catch (error) {
+    res.status(500).send({success: false, message: "Failed to retrieve blog previews."});
+  }
+};
+
+
+
+// Creating a blog
 exports.createBlog = async (req, res) => {
   const { title, body } = req.body;
 
@@ -95,7 +97,7 @@ exports.createBlog = async (req, res) => {
     });
   }
 
-  const blogPost = new BlogPost(req.blogId,title, body, images);
+  const blogPost = new BlogPost(req.blogId, title, body, images);
 
   try {
     await BlogPost.save(blogPost);
@@ -105,43 +107,9 @@ exports.createBlog = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .send({ success: true, message: "Failed to create blog post." });
+      .send({ success: false, message: "Failed to create blog post." });
   }
 };
 
-exports.getBlogs = async (req, res) => {
-  const { page = 1, limit = 10 } = req.query; // Default: page 1, 10 posts per page
-
-  try {
-    const blogs = await BlogPost.findAll({ page, limit });
-    res.status(200).json(blogs);
-  } catch (error) {
-    res.status(500).send({success:false, message: "Failed to retrieve blog posts."});
-  }
-};
-
-// Preview blog posts
-exports.getBlogPreview = async (req, res) => {
-  try {
-    const blogs = await BlogPost.findPreviews();
-    res.status(200).json(blogs);
-  } catch (error) {
-    res.status(500).send({success: false, message: "Failed to retrieve blog previews."});
-  }
-};
-
-// Fetch single blog post for reading more
-exports.getBlogById = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const blog = await BlogPost.findById(id);
-    if (blog) {
-      res.status(200).json(blog);
-    } else {
-      res.status(404).send({success: false, message: "Blog post not found."});
-    }
-  } catch (error) {
-    res.status(500).send({success:false, message: "Failed to retrieve blog post."});
-  }
-};
+// Export the upload instance for blog-specific usage
+exports.upload = upload;
