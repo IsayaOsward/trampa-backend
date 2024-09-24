@@ -1,24 +1,36 @@
-// services/emailService.js
-const transporter = require("../config/nodemailerConfig");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 
-class EmailService {
-  static async sendEmail(to, subject, text, html) {
-    const mailOptions = {
-      from: process.env.EMAIL_USERNAME, // Sender address
-      to, // Recipient address
-      subject, // Subject line
-      text, // Plain text body
-      html, // HTML body (optional)
-    };
+// Create a Nodemailer transporter object for Gmail
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_PROVIDER, // Gmail SMTP server
+  port: process.env.SMTP_PORT, // Port 465 for secure connections
+  secure: true, // Use SSL (secure connection)
+  auth: {
+    user: process.env.EMAIL_USER, // Your Gmail address
+    pass: process.env.EMAIL_PASSWORD, // Your app password
+  },
+});
 
-    try {
-      const info = await transporter.sendMail(mailOptions);
-      console.log("Email sent: ", info.response);
-    } catch (error) {
-      console.error("Error sending email:", error);
-      throw new Error("Email could not be sent");
-    }
+// Function to send an email
+const sendEmailMessage = async (to, subject, text, html) => {
+  try {
+    // Send mail with defined transport object
+    let info = await transporter.sendMail({
+      from: `"TRAMPA" <${process.env.EMAIL_USER}>`, // Sender address
+      to: to, // Receiver(s)
+      subject: subject, // Subject line
+      text: text, // Plain text body
+      html: html, // HTML body
+    });
+
+    console.log("Message sent: %s", info.messageId);
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw error;
   }
-}
+};
 
-module.exports = EmailService;
+module.exports = {
+  sendEmailMessage,
+};

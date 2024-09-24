@@ -162,6 +162,13 @@ class userModel {
     return results[0];
   }
 
+  static async getRegisteredUsersPending(status) {
+    // console.log("findUserByEmail (login) called with email:", email); // Log
+    const sql = `SELECT users.first_name, users.lastname, users.email,users.phone_number FROM users WHERE users.status = ?`;
+    const results = await queryStatement(sql, [status]);
+    return results[0];
+  }
+
   static async incrementLoginAttempts(user_id) {
     console.log("incrementLoginAttempts called with user_id:", user_id); // Log
     const sql =
@@ -174,6 +181,69 @@ class userModel {
     const sql = "UPDATE credentials SET loginAttempts = 0 WHERE user_id = ?";
     await queryStatement(sql, [user_id]);
   }
+
+  //fetching applicants logics
+  static async fetchApplicants() {
+    console.log("Fetching applicants"); // Log
+    const awaits = 1;
+    const sql =
+      "SELECT id,first_name,lastname,gender,phone_number,email,status FROM users WHERE users.status =?";
+    const results = await queryStatement(sql, [awaits]);
+    
+    return results;
+  }
+
+  static async fetchPayments() {
+    console.log("Fetching applicants"); // Log
+    const pending = 593287;
+    const sql =
+      "SELECT id,first_name,lastname,gender,phone_number,email,status FROM users WHERE users.status =?";
+    const results = await queryStatement(sql, [pending]);
+    return results;
+  }
+
+  // Single or bulk approve applicants
+  static async approveApplicants(phoneNumbers, statuses) {
+    if (!Array.isArray(phoneNumbers)) {
+      phoneNumbers = [phoneNumbers];
+      statuses = [statuses];
+    }
+
+    // Check if phoneNumbers and statuses are arrays and have the same length
+    if (phoneNumbers.length !== statuses.length) {
+      throw new Error(
+        "Phone numbers and statuses arrays must have the same length."
+      );
+    }
+
+    // Prepare the SQL for bulk update using CASE
+    const sql = `
+      UPDATE users 
+      SET status = CASE phone_number 
+      ${phoneNumbers.map((_, index) => `WHEN ? THEN ?`).join(" ")}
+      END 
+      WHERE phone_number IN (${phoneNumbers.map(() => "?").join(",")});
+    `;
+
+    // Flatten the params array (phone_number and status alternately, followed by the phone_numbers at the end)
+    const params = phoneNumbers
+      .reduce((arr, phone, index) => {
+        return arr.concat(phone, statuses[index]);
+      }, [])
+      .concat(phoneNumbers);
+
+    // Execute the query
+    const results = await queryStatement(sql, params);
+    return results;
+  }
+
+  static async getUserByPhoneNumber(phoneNumber) {
+    const sql =
+      "SELECT users.first_name, users.lastname, users.email FROM users  WHERE users.phone_number = ?";
+    const results = await queryStatement(sql, [phoneNumber]);
+    return results;
+  }
 }
+
 
 module.exports = userModel;

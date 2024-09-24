@@ -7,6 +7,8 @@ const {
   isValidName,
   isValidPassword,
 } = require("../utils/validation");
+const {sendEmailMessage} = require("../services/emailService");
+const SmsService = require("../services/smsService");
 
 // Hash password using bcrypt
 async function hashPassword(password) {
@@ -23,13 +25,12 @@ async function loginController(req, res) {
   try {
     // Find user by email
     const user = await userModel.findUserByEmail(email);
-    console.log("The find user by email result "+user);
-    
+    console.log("The find user by email result " + user);
 
     // If user is not found
     if (!user) {
       console.log("User is not found");
-      
+
       return res
         .status(401)
         .send({ success: false, message: "Invalid email or password" });
@@ -85,7 +86,7 @@ async function loginController(req, res) {
 
 // Register Controller
 async function registerController(req, res) {
-  console.log("Register request received:", req.body); // Log the incoming request
+  console.log("Register request received: ", req.body);
 
   try {
     let { first_name, lastname, gender, phone_number, email, password, role } =
@@ -232,4 +233,275 @@ async function generateUniqueUserID() {
   return user_id;
 }
 
-module.exports = { registerController, loginController };
+//
+// fetching pending applicants Controller
+async function fetchApplicantsController(req, res) {
+  try {
+    // Find user by email
+    const applicants = await userModel.fetchApplicants();
+    // approveApplicants;
+    // Send response
+    return res.status(200).send({ success: true, data: applicants });
+  } catch (error) {
+    console.error("Error in FetchApplicantsController:", error);
+    return res
+      .status(500)
+      .send({ success: false, message: "Internal server error" });
+  }
+}
+
+
+// fetching pending applicants Controller
+async function fetchPaymentController(req, res) {
+  try {
+    // Find user by email
+    const applicants = await userModel.fetchPayments();
+    // approveApplicants;
+    // Send response
+    return res.status(200).send({ success: true, data: applicants });
+  } catch (error) {
+    console.error("Error in FetchApplicantsController:", error);
+    return res
+      .status(500)
+      .send({ success: false, message: "Internal server error" });
+  }
+}
+
+async function approveApplicantsController(req, res) {
+  try {
+    const data = req.body; // Can be a single object or an array of objects
+
+    // Check if data is an array or single object
+    const applicants = Array.isArray(data) ? data : [data];
+
+    // Validate that each object contains phone_number and status
+    for (let i = 0; i < applicants.length; i++) {
+      const { phone_number, status } = applicants[i];
+      if (!phone_number || status === undefined) {
+        return res.status(400).send({
+          success: false,
+          message: "Each applicant must have a phone number and a status.",
+        });
+      }
+    }
+
+    // Process each applicant (phone_number and status)
+    const results = [];
+    for (let applicant of applicants) {
+      const { phone_number, status } = applicant;
+
+      // Set message and email subject based on status
+      let message;
+      let subject;
+      if (status === 989898) {
+        message = `Hello, your account has been rejected. Please contact support for more information.`;
+        subject = "Account Rejected";
+      } else if (status === 126798) {
+        message = `Hello, your payments have been completed, and your account is now activated!`;
+        subject = "Account Activated";
+      } else {
+        message = `Hello, your account has been approved successfully. Kindly login to complete the registration process.`;
+        subject = "Account Approved";
+      }
+
+      const result = await userModel.approveApplicants(phone_number, status);
+
+      if (result.affectedRows === 0) {
+        results.push({
+          phone_number,
+          success: false,
+          message: "User not found or no update made.",
+        });
+        continue; // Skip to the next applicant
+      }
+
+      // Fetch the user details after approval or rejection
+      const user = await userModel.getUserByPhoneNumber(phone_number);
+
+      // Send SMS and email to the user
+      const smsResponse = await SmsService.sendMessages(
+        [user.phone_number],
+        message
+      );
+      const emailResponse = await sendEmailMessage(
+        user.email,
+        subject,
+        message
+      );
+
+      // Add result to the results array
+      results.push({
+        phone_number,
+        email: user.email,
+        sms: smsResponse,
+        email: emailResponse,
+        success: smsResponse.success && emailResponse.success,
+        message:
+          smsResponse.success && emailResponse.success
+            ? "User notified successfully."
+            : "User processed but failed to notify via SMS or email.",
+      });
+    }
+
+    // Send success response
+    return res.status(200).send({
+      success: true,
+      message: "Applicants processed successfully.",
+      results,
+    });
+  } catch (error) {
+    console.error("Error in ApproveApplicantsController:", error);
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+}
+
+
+async function remindApplicantsController(req, res) {
+  try {
+    const data = req.body;
+
+    // Check if data is an array or single object
+    const applicants = Array.isArray(data) ? data : [data];
+
+    // Process each applicant
+    const results = [];
+    for (let applicant of applicants) {
+      const { phone_number } = applicant;
+
+      // Fetch user details from the database
+      const user = await userModel.getUserByPhoneNumber(phone_number);
+
+      if (!user) {
+        results.push({
+          phone_number,
+          success: false,
+          message: "User not found.",
+        });
+        continue; // Skip to the next applicant
+      }
+
+      // Set the message and subject
+      const message = `Hello ${user.first_name} ${user.lastname}, your account is pending activation. Please pay your bills to activate your account.`;
+      const subject = "Account Activation Reminder";
+
+      // Send SMS and email to the user
+      const smsResponse = await SmsService.sendMessages(
+        [user.phone_number],
+        message
+      );
+      const emailResponse = await sendEmailMessage(
+        user.email,
+        subject,
+        message
+      );
+
+      // Add result to the results array
+      results.push({
+        phone_number,
+        email: user.email,
+        sms: smsResponse,
+        email: emailResponse,
+        success: smsResponse.success && emailResponse.success,
+        message:
+          smsResponse.success && emailResponse.success
+            ? "User notified successfully."
+            : "User processed but failed to notify via SMS or email.",
+      });
+    }
+
+    // Send success response
+    return res.status(200).send({
+      success: true,
+      message: "Reminders sent successfully.",
+      results,
+    });
+  } catch (error) {
+    console.error("Error in remindApplicantsController:", error);
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+}
+
+
+
+async function pendingRegController(req, res) {
+  console.log("Request received:", req.body); // Log the incoming request
+
+  const pending = req.query.pending;
+
+  try {
+    // Find user by email
+    const user = await userModel.findUserByEmail(pending);
+    console.log("The find user by email result " + user);
+
+    // If user is not found
+    if (!user) {
+      console.log("User is not found");
+
+      return res
+        .status(401)
+        .send({ success: false, message: "Invalid email or password" });
+    }
+
+    // Check if the account is locked due to too many incorrect login attempts
+    if (user.loginAttempts >= 5) {
+      return res.status(403).send({
+        success: false,
+        message:
+          "Your account is locked due to too many incorrect login attempts.",
+      });
+    }
+
+    // Verify the password
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!isPasswordCorrect) {
+      // Increment login attempts on failed login
+      await userModel.incrementLoginAttempts(user.user_id);
+      return res
+        .status(401)
+        .send({ success: false, message: "Invalid email or password" });
+    }
+
+    // Reset login attempts on successful login
+    await userModel.resetLoginAttempts(user.user_id);
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Prepare the response data
+    const response = {
+      username: `${user.first_name} ${user.lastname}`,
+      email: user.email,
+      accessToken,
+      refreshToken,
+    };
+
+    // Send response
+    return res.status(200).send({ success: true, data: response });
+  } catch (error) {
+    console.error("Error in loginController:", error);
+    return res
+      .status(500)
+      .send({ success: false, message: "Internal server error" });
+  }
+}
+
+module.exports = {
+  registerController,
+  loginController,
+  fetchApplicantsController,
+  approveApplicantsController,
+  pendingRegController,
+  fetchPaymentController,
+  remindApplicantsController,
+};

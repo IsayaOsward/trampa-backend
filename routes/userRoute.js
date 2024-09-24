@@ -16,4 +16,19 @@ router.post("/register/", registerLimiter, userController.registerController);
 //route for login
 router.post("/login/",userController.loginController);
 
+
+//route for fetching user whose registration awaits approval.
+router.get("/pending/registration/",userController.pendingRegController);
+
+//route for fetching applicants data
+router.get("/fetch/applicants",userController.fetchApplicantsController);
+
+//
+router.get("/fetch/payments", userController.fetchPaymentController);
+
+//approve applicants
+router.post("/update/applicants", userController.approveApplicantsController);
+
+router.post("/remind/applicants", userController.remindApplicantsController);
+
 module.exports = router;
