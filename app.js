@@ -10,8 +10,8 @@ const resourceRoutes = require("./routes/resourceRoutes");
 const membershipRoutes = require("./routes/membershipRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const passportRoutes = require('./routes/passportRoutes');
+const imageRoutes = require("./routes/homeImageRoutes");
 const path = require("path");
-
 
 
 // Parse application/json
@@ -23,7 +23,7 @@ app.use("/uploads", express.static("uploads"));
 app.use(cors());
 
 // Define your routes
-app.get("/", (req, res) => {
+app.get("/api/v1/", (req, res) => {
   res.send({ success: true, message: "Servier is running successfully" });
 });
 
@@ -35,9 +35,14 @@ app.use('/api/v1/',resourceRoutes);
 app.use("/api/v1/", membershipRoutes);
 app.use("/api/v1/", passportRoutes);
 // Serve uploaded files statically
-app.use('/upload/gallery', express.static(path.join(__dirname, 'uploads/gallery')));
-
-app.use('/gallery', galleryRoutes);
+app.use("/api/v1/gallery", galleryRoutes);
+app.use("/api/v1/images/", imageRoutes);
+// Serve uploaded images statically
+app.use(
+  "/api/v1/upload/gallery",
+  express.static(path.join(__dirname, "uploads/gallery"))
+);
+app.use("/api/v1/uploads/home_images", express.static("uploads/home_images"));
 
 // 404 Error Handler
 app.use((req, res, next) => {
@@ -47,7 +52,7 @@ app.use((req, res, next) => {
   });
 });
 
-// // Global Error Handler (optional)
+// Global Error Handler (optional)
 // app.use((err, req, res, next) => {
 //   res.status(err.status || 500).json({
 //     message: "Internal Server Error",

@@ -64,9 +64,9 @@ class BlogPost {
   }
 
   static async findById(id) {
-    const sql = "SELECT * FROM blog_posts WHERE id = ?";
+    const sql = "SELECT * FROM blog_posts WHERE id = ? AND isDeleted = ?";
     try {
-      const result = await queryStatement(sql, [id]);
+      const result = await queryStatement(sql, [id,'false']);
       return result.length ? result[0] : null;
     } catch (error) {
       throw error;

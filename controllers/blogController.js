@@ -1,6 +1,6 @@
 // controllers/blogController.js
 const BlogPost = require("../models/blogModel");
-const setupMulter = require("../utils/imageUpload") // Import the utility function
+const setupMulter = require("../utils/imageUpload"); // Import the utility function
 const generateUniqueBlogId = require("../utils/generateBlogId");
 
 const upload = setupMulter("blogs"); // Pass the folder name
@@ -38,13 +38,15 @@ exports.preValidateBlog = (req, res, next) => {
 };
 // Fetch paginated blog posts
 exports.getBlogs = async (req, res) => {
-  const { page = 1, limit = 10 } = req.query; // Default: page 1, 10 posts per page
+  const { page = 1, limit = 10 } = req.query;
 
   try {
     const blogs = await BlogPost.findAll({ page, limit });
     res.status(200).json(blogs);
   } catch (error) {
-    res.status(500).send({success: false, message: "Failed to retrieve blog posts."});
+    res
+      .status(500)
+      .send({ success: false, message: "Failed to retrieve blog posts." });
   }
 };
 
@@ -57,13 +59,14 @@ exports.getBlogById = async (req, res) => {
     if (blog) {
       res.status(200).json(blog);
     } else {
-      res.status(404).send({success: false, message: "Blog post not found."});
+      res.status(404).send({ success: false, message: "Blog post not found." });
     }
   } catch (error) {
-    res.status(500).send({success: false, message: "Failed to retrieve blog post."});
+    res
+      .status(500)
+      .send({ success: false, message: "Failed to retrieve blog post." });
   }
 };
-
 
 // Preview blog posts
 exports.getBlogPreview = async (req, res) => {
@@ -71,24 +74,30 @@ exports.getBlogPreview = async (req, res) => {
     const blogs = await BlogPost.findPreviews();
     res.status(200).json(blogs);
   } catch (error) {
-    res.status(500).send({success: false, message: "Failed to retrieve blog previews."});
+    res
+      .status(500)
+      .send({ success: false, message: "Failed to retrieve blog previews." });
   }
 };
-
-
 
 // Creating a blog
 exports.createBlog = async (req, res) => {
   const { title, body } = req.body;
-
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).send({
+  let images;
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).send({
+        success: false,
+        message: "Please upload between 1 and 10 images.",
+      });
+    }
+    images = req.files.map((file) => file.filename);
+  } catch (error) {
+    return res.status(500).send({
       success: false,
-      message: "Please upload between 1 and 10 images.",
+      message: "An internal server error, ensure that all fields are correct",
     });
   }
-
-  const images = req.files.map((file) => file.filename);
 
   if (!BlogPost.validateImages(images)) {
     return res.status(400).send({

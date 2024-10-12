@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const accessTokenSecret = "yourAccessTokenSecret"; // Replace with your own secret key
 const refreshTokenSecret = "yourRefreshTokenSecret"; // Replace with your own secret key
 
-// Function to generate an access token
+
 function generateAccessToken(user) {
   const payload = {
     id: user.id,
@@ -15,7 +15,6 @@ function generateAccessToken(user) {
   return jwt.sign(payload, accessTokenSecret, { expiresIn: "15m" }); // Access token valid for 15 minutes
 }
 
-// Function to generate a refresh token
 function generateRefreshToken(user) {
   const payload = {
     id: user.id,
@@ -23,10 +22,31 @@ function generateRefreshToken(user) {
     role: user.role,
   };
 
-  return jwt.sign(payload, refreshTokenSecret, { expiresIn: "1d" }); // Refresh token valid for 1 days
+  return jwt.sign(payload, refreshTokenSecret, { expiresIn: "1d" });
+}
+
+function verifyAccessToken(token) {
+  try {
+    const decoded = jwt.verify(token, accessTokenSecret);
+    return { valid: true, decoded };
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
+}
+
+// Function to verify a refresh token
+function verifyRefreshToken(token) {
+  try {
+    const decoded = jwt.verify(token, refreshTokenSecret);
+    return { valid: true, decoded };
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
 }
 
 module.exports = {
   generateAccessToken,
   generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
 };

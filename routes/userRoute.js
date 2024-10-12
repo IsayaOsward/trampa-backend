@@ -23,6 +23,10 @@ router.get("/pending/registration/",userController.pendingRegController);
 //route for fetching applicants data
 router.get("/fetch/applicants",userController.fetchApplicantsController);
 
+
+//route for fetching applicants data
+router.get("/fetch/all/users",userController.fetchAllUsersController);
+
 //
 router.get("/fetch/payments", userController.fetchPaymentController);
 
@@ -30,5 +34,7 @@ router.get("/fetch/payments", userController.fetchPaymentController);
 router.post("/update/applicants", userController.approveApplicantsController);
 
 router.post("/remind/applicants", userController.remindApplicantsController);
+
+router.get("/user/:userId", userController.getUserAndMembership);
 
 module.exports = router;

@@ -89,7 +89,7 @@ async function registerController(req, res) {
   console.log("Register request received: ", req.body);
 
   try {
-    let { first_name, lastname, gender, phone_number, email, password, role } =
+    let { first_name, lastname, gender, phone_number, salutation, education, hasJob, org, jobRole, joinedAs, email, password, role } =
       req.body;
 
     // Default role to "user" if not provided
@@ -98,7 +98,7 @@ async function registerController(req, res) {
     }
 
     // Revalidate user inputs since they are also done in frontend
-    if (!first_name || !lastname || !email || !gender || !phone_number) {
+    if (!first_name || !lastname || !email || !gender || !phone_number || !salutation || !nationality || !hasJob || !education) {
       return res
         .status(400)
         .send({ success: false, message: "All fields are required" });
@@ -168,6 +168,10 @@ async function registerController(req, res) {
                   gender,
                   phone_number,
                   email,
+                  salutation,
+                  education,hasJob,
+                  nationality,
+                  attachmentEducation
                 },
                 {
                   user_id,
@@ -233,6 +237,34 @@ async function generateUniqueUserID() {
   return user_id;
 }
 
+
+
+
+// fetching all users regadless of their status
+// fetching pending applicants Controller
+async function fetchAllUsersController(req, res) {
+  try {
+    // Find user by email
+    const applicants = await userModel.fetchAllApplicants();
+    // approveApplicants;
+    // Send response
+    return res.status(200).send({ success: true, data: applicants });
+  } catch (error) {
+    console.error("Error in FetchApplicantsController:", error);
+    return res
+      .status(500)
+      .send({ success: false, message: "Internal server error" });
+  }
+}
+
+
+
+
+
+
+
+
+
 //
 // fetching pending applicants Controller
 async function fetchApplicantsController(req, res) {
@@ -249,6 +281,13 @@ async function fetchApplicantsController(req, res) {
       .send({ success: false, message: "Internal server error" });
   }
 }
+
+
+
+
+
+
+
 
 
 // fetching pending applicants Controller
@@ -496,6 +535,28 @@ async function pendingRegController(req, res) {
   }
 }
 
+
+
+
+
+async function getUserAndMembership(req, res) {
+    const { userId } = req.params;
+    
+    console.log(userId);
+    
+    try {
+      const user = await userModel.findUserById(userId,'false');
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      const membership = await userModel.findMembershipByUserId(userId,'false');
+      res.json({ user, membership });
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching user data', error });
+    }
+  }
+
+
 module.exports = {
   registerController,
   loginController,
@@ -503,5 +564,7 @@ module.exports = {
   approveApplicantsController,
   pendingRegController,
   fetchPaymentController,
+  fetchAllUsersController,
   remindApplicantsController,
+  getUserAndMembership,
 };

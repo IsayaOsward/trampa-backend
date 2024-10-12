@@ -41,6 +41,18 @@ class userModel {
     });
   }
 
+  static async findUserById(userId, isDeleted) {
+    const sql = "SELECT * FROM users WHERE user_id = ? AND isDeleted = ?";
+    const results = await queryStatement(sql, [userId, isDeleted]);
+    return results[0];
+  }
+
+  static async findMembershipByUserId(userId, isDeleted) {
+    const sql = "SELECT * FROM membership WHERE user_id = ? AND isDeleted = ?";
+    const results = await queryStatement(sql, [userId, isDeleted]);
+    return results[0];
+  }
+
   static registerUser(userData, callback) {
     console.log("registerUser called with userData:", userData); // Log
     const { user_id, first_name, lastname, gender, phone_number, email } =
@@ -91,7 +103,7 @@ class userModel {
         }
 
         const registerSQL =
-          "INSERT INTO users(user_id, first_name, lastname, gender, phone_number, email) VALUES (?, ?, ?, ?, ?, ?)";
+          "INSERT INTO users(user_id, first_name, lastname, gender, phone_number, email, nationality, salutation, employmentStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         connection.query(
           registerSQL,
           [
@@ -101,6 +113,9 @@ class userModel {
             userData.gender,
             userData.phone_number,
             userData.email,
+            userData.nationality,
+            userData.salutation,
+            userData.hasJob
           ],
           (err) => {
             if (err) {
@@ -189,7 +204,17 @@ class userModel {
     const sql =
       "SELECT id,first_name,lastname,gender,phone_number,email,status FROM users WHERE users.status =?";
     const results = await queryStatement(sql, [awaits]);
-    
+
+    return results;
+  }
+
+  // FETCH ALL USERS FROM THE DATABASE
+  static async fetchAllApplicants() {
+    console.log("Fetching applicants"); // Log
+    const isDeleted = "false";
+    const sql =
+      "SELECT user_id,first_name,lastname,gender,phone_number,email,status FROM users WHERE users.isDeleted =?";
+    const results = await queryStatement(sql, [isDeleted]);
     return results;
   }
 
@@ -239,11 +264,10 @@ class userModel {
 
   static async getUserByPhoneNumber(phoneNumber) {
     const sql =
-      "SELECT users.first_name, users.lastname, users.email FROM users  WHERE users.phone_number = ?";
+      "SELECT users.user_id, users.first_name, users.lastname, users.email FROM users  WHERE users.phone_number = ?";
     const results = await queryStatement(sql, [phoneNumber]);
     return results;
   }
 }
-
 
 module.exports = userModel;
