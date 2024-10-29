@@ -18,18 +18,13 @@ async function hashPassword(password) {
 
 // Login Controller
 async function loginController(req, res) {
-  console.log("Login request received:", req.body); // Log the incoming request
 
   const { email, password } = req.body;
 
   try {
-    // Find user by email
     const user = await userModel.findUserByEmail(email);
-    console.log("The find user by email result " + user);
 
-    // If user is not found
     if (!user) {
-      console.log("User is not found");
 
       return res
         .status(401)
@@ -66,10 +61,19 @@ async function loginController(req, res) {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    var code = "0000";
+    if(user.role =="admin")
+    {
+      code = "9000";
+    }
+    else if (user.role == "user"){
+      code = "5000";
+    }
     // Prepare the response data
     const response = {
       username: `${user.first_name} ${user.lastname}`,
       email: user.email,
+      code: code,
       accessToken,
       refreshToken,
     };
@@ -85,20 +89,38 @@ async function loginController(req, res) {
 }
 
 // Register Controller
+// Register Controller
 async function registerController(req, res) {
   console.log("Register request received: ", req.body);
-
+  var password;
   try {
-    let { first_name, lastname, gender, phone_number, salutation, education, hasJob, org, jobRole, joinedAs, email, password, role } =
-      req.body;
+    let {
+      fname,
+      lname,
+      gender,
+      phone,
+      salutation,
+      educationLevel,
+      workingOrg,
+      nationality,
+      email,
+      role,
+    } = req.body;
 
+
+    password = lname.toUpperCase();
+    let hasJob;
+    if(!workingOrg)
+    {
+      hasJob=true;
+    }
     // Default role to "user" if not provided
     if (!role) {
       role = "user";
     }
 
     // Revalidate user inputs since they are also done in frontend
-    if (!first_name || !lastname || !email || !gender || !phone_number || !salutation || !nationality || !hasJob || !education) {
+    if (!fname || !lname || !email || !gender || !phone || !salutation || !nationality || !hasJob || !educationLevel) {
       return res
         .status(400)
         .send({ success: false, message: "All fields are required" });
@@ -108,17 +130,10 @@ async function registerController(req, res) {
         .status(400)
         .send({ success: false, message: "Invalid email address" });
     }
-    if (!isValidName(first_name) || !isValidName(lastname)) {
+    if (!isValidName(fname) || !isValidName(lname)) {
       return res
         .status(400)
         .send({ success: false, message: "Names can only contain letters" });
-    }
-    if (!isValidPassword(password)) {
-      return res.status(400).send({
-        success: false,
-        message:
-          "Password must be at least 8 characters long and include both letters, special characters, and numbers",
-      });
     }
 
     // Verify whether a new user is using an existing email
@@ -138,7 +153,7 @@ async function registerController(req, res) {
       }
 
       // Verify whether a new user is using an existing phone number
-      userModel.findUserByPhone(phone_number, (err, existingPhone) => {
+      userModel.findUserByPhone(phone, (err, existingPhone) => {
         if (err) {
           console.error("Error checking phone existence:", err);
           return res.status(500).send({
@@ -163,13 +178,13 @@ async function registerController(req, res) {
               userModel.registerUserWithCredentials(
                 {
                   user_id,
-                  first_name,
-                  lastname,
+                  fname,
+                  lname,
                   gender,
-                  phone_number,
+                  phone,
                   email,
                   salutation,
-                  education,hasJob,
+                  educationLevel,hasJob,
                   nationality,
                   attachmentEducation
                 },
@@ -236,9 +251,6 @@ async function generateUniqueUserID() {
 
   return user_id;
 }
-
-
-
 
 // fetching all users regadless of their status
 // fetching pending applicants Controller
@@ -556,6 +568,29 @@ async function getUserAndMembership(req, res) {
     }
   }
 
+async function setUserPassword(req, res) {
+  const { userId, password } = req.body;
+
+  try {
+    // Update user password
+    const result = await userModel.setUserPassword(userId, password);
+
+    if (!result) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Fetch user role from the credentials table
+    const role = await userModel.getUserRoleByUserId(userId);
+
+    // Return user role in the response
+    res.json({ userId, role });
+  } catch (error) {
+    // Handle any errors during the process
+    res.status(500).json({ message: "Error updating password", error });
+  }
+}
+
+
 
 module.exports = {
   registerController,
@@ -567,4 +602,5 @@ module.exports = {
   fetchAllUsersController,
   remindApplicantsController,
   getUserAndMembership,
+  setUserPassword,
 };

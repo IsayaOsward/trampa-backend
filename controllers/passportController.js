@@ -1,7 +1,7 @@
 const Passport = require("../models/passportModel");
 const path = require("path");
 
-exports.registerPassport = async (req, res) => {
+exports.registerPassport = async (req, res) => {  
   try {
     const { user_id } = req.body;
 

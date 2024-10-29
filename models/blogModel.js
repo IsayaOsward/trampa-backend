@@ -51,7 +51,7 @@ class BlogPost {
   static async findPreviews() {
     const sql = `
       SELECT id, title, JSON_UNQUOTE(JSON_EXTRACT(images, '$[0]')) AS image, 
-             LEFT(body, 150) AS snippet 
+             LEFT(body, 150) AS snippet, created_at,isClosed
       FROM blog_posts
       ORDER BY created_at DESC
     `;

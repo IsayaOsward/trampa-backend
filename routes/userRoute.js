@@ -37,4 +37,6 @@ router.post("/remind/applicants", userController.remindApplicantsController);
 
 router.get("/user/:userId", userController.getUserAndMembership);
 
+router.put("/update/user/", userController.setUserPassword);
+
 module.exports = router;

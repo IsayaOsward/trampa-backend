@@ -1,9 +1,9 @@
 const pool = require("../config/database");
 const { queryStatement } = require("../utils/queryStatement");
+const bcrypt = require("bcrypt");
 
 class userModel {
   static checkUserByEmail(email, callback) {
-    console.log("findUserByEmail called with email:", email); // Log
     const statement = "SELECT * FROM users WHERE email = ?";
     pool.query(statement, [email], (err, results) => {
       if (typeof callback === "function") {
@@ -16,7 +16,6 @@ class userModel {
   }
 
   static findUserByPhone(phone_number, callback) {
-    console.log("findUserByPhone called with phone_number:", phone_number); // Log
     const statement = "SELECT * FROM users WHERE phone_number = ?";
     pool.query(statement, [phone_number], (err, results) => {
       if (typeof callback === "function") {
@@ -45,6 +44,20 @@ class userModel {
     const sql = "SELECT * FROM users WHERE user_id = ? AND isDeleted = ?";
     const results = await queryStatement(sql, [userId, isDeleted]);
     return results[0];
+  }
+
+  static async setUserPassword(userId, userPassword) {
+    try {
+      const sql = "UPDATE credentials SET password_hash = ? WHERE user_id = ?";
+
+      const passwordHash = await this.hashPassword(userPassword);
+      const results = await queryStatement(sql, [passwordHash, userId]);
+
+      return results.affectedRows; // Return number of affected rows for confirmation
+    } catch (error) {
+      console.error("Error updating user password:", error);
+      throw error; // Re-throw the error for higher-level handling if necessary
+    }
   }
 
   static async findMembershipByUserId(userId, isDeleted) {
@@ -115,7 +128,7 @@ class userModel {
             userData.email,
             userData.nationality,
             userData.salutation,
-            userData.hasJob
+            userData.hasJob,
           ],
           (err) => {
             if (err) {
@@ -171,7 +184,6 @@ class userModel {
   // Logging in logics
 
   static async findUserByEmail(email) {
-    console.log("findUserByEmail (login) called with email:", email); // Log
     const sql = `SELECT users.user_id AS user_id, users.first_name, users.lastname, users.email, credentials.password_hash, credentials.role, credentials.loginAttempts FROM users JOIN credentials ON users.user_id = credentials.user_id WHERE users.email = ? LIMIT 1;`;
     const results = await queryStatement(sql, [email]);
     return results[0];
@@ -267,6 +279,11 @@ class userModel {
       "SELECT users.user_id, users.first_name, users.lastname, users.email FROM users  WHERE users.phone_number = ?";
     const results = await queryStatement(sql, [phoneNumber]);
     return results;
+  }
+
+  static async hashPassword(password) {
+    const saltRounds = 10;
+    return bcrypt.hash(password, saltRounds);
   }
 }
 
